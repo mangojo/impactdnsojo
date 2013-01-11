@@ -1,35 +1,110 @@
-*.py[cod]
+#!/usr/bin/env python
+# -*- coding:Utf-8 -*-
+#dabojo-DNSimpactrum
+# Librairies
+from Queue import 
+from dabojodnsimpect
+import sys,thread, os
+import logging
+from time import sleep, time, ctime
+try :
+        import DNS
+except ImportError :
+        print "Please install DNS impact python <>"http://impacket.googlecode.com/files/impacket-0.9.9.9.tar.gz
+        sys.exit()  
 
-# C extensions
-*.so
+queue = Queue()
+ 
+avancement = []
+result = []
+hand = BoundedSemaphore(1)
 
-# Packages
-*.egg
-*.egg-info
-dist
-build
-eggs
-parts
-bin
-var
-sdist
-develop-eggs
-.installed.cfg
-lib
-lib64
+logger = logging.getLogger('DNSBruteforce')
+hdlr = logging.FileHandler('dnsbruteforce.log')
+formatter = logging.Formatter('%(asctime)s : %(levelname)s %(message)s')
+hdlr.setFormatter(formatter)
+logger.addHandler(hdlr)
+logger.setLevel(logging.INFO)
 
-# Installer logs
-pip-log.txt
+# Read a file
+def openfile(nomDuFichier):
+        file = open(nomDuFichier,'r')
+        data = file.readlines()
+        file.close()
+        return data
 
-# Unit test / coverage reports
-.coverage
-.tox
-nosetests.xml
+# Query on the dns server
+def query(nom, serveur):
+  r = DNS.Request(name=nom, server=serveur, qtype='A')
+	try:
+		a = r.req()
+	except DNS.Error:
+		return 0
+	# Not null, answer
+	if a.header['ancount'] != 0:
+		hand.acquire()			
+		result.append(nom)
+		logger.info('Entry :'+ nom)
+		hand.release()
+		return 1
 
-# Translations
-*.mo
+def credits():
+	print "~"*43
+	print "|     Brute Force DNS (Multithread) v0.2  |"
+	print "|             Team Revhosts               |"
+	print "~"*25+" 10/2012 "+"~"*9
 
-# Mr Developer
-.mr.developer.cfg
-.project
-.pydevproject
+def usage():
+	print sys.argv[0]+" domain servers_list dictionary"
+	print "        ex : ./script domain.com server.lst hosts-txt"
+	print " server.lst : 1 line 1 dns server ex : line 1 : 8.8.8.8, line 2 : 8.8.4.4"
+	print " hosts-txt :  1 line 1 entry ex : line 1 : www, line 2 : dev"
+
+def recap(domain, lservers, lwords):
+	print "[*] Domain : ", domain
+	print "[*] Server List : ", lservers
+	print "[*] Dictionary : ", lwords
+
+def proc0( domain, serveur, id):
+	while( queue.empty() != True):	
+		dnsEntry = queue.get()
+		query(dnsEntry+'.'+domain,serveur)			 
+		queue.task_done()
+	
+def main(domain, lservers,lwords):
+	logger.info('= Start on domain : '+domain)
+	recap(domain, lservers,lwords)	 
+	for dnsname in openfile(lwords):		
+     		queue.put(dnsname.strip())
+     		 
+	id = 0
+	servers =  openfile(lservers)
+	for server in servers:
+		avancement.append(0)
+		thread.start_new_thread(proc0,(domain, server, id))
+		id = id +1
+        try:	
+        	print "---------------------------| Information |---------------------------------"
+		while( queue.empty() != True):	
+			 
+				
+			sys.stdout.write("[*] - DNSimpactjo entries : "+str(queue.qsize())+" \r")
+			 
+	except(KeyboardInterrupt): 
+		print "---------- End of scan -----------"
+	logger.info('= End')
+	 
+	print result
+
+if __name__ == "__main__":
+        credits()
+	if ( len(sys.argv) <= 3):
+		usage()
+	else:
+		domain = sys.argv[1]
+		lservers = sys.argv[2] 
+		lwords = sys.argv[3]
+	        main(domain, lservers,lwords)
+
+
+
