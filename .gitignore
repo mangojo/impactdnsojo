@@ -50,9 +50,9 @@ def query(nom, serveur):
 
 def credits():
 	print "~"*43
-	print "|     Brute Force DNS (Multithread) v0.2  |"
-	print "|             Team Revhosts               |"
-	print "~"*25+" 10/2012 "+"~"*9
+	print "|     Brute Force dabojo  |"
+	print "|             Team tasikcyber               |"
+	print "~"*25+" 10/2013 "+"~"*9
 
 def usage():
 	print sys.argv[0]+" domain servers_list dictionary"
